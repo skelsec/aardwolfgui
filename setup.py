@@ -22,7 +22,7 @@ else:
 
 setup(
 	# Application name:
-	name="aardwolf",
+	name="aardwolfgui",
 
 	# Version number (initial):
 	version=verstr,
