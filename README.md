@@ -42,6 +42,7 @@ As usual the scripts take the target/scredentials in URL format. Below some exam
  - On ubuntu you can use `apt install python3-pyqt5` before installing `aardwolf` and it will (should) work
 
 # Kudos
- - Citronneur's [`rdpy`](https://github.com/citronneur/rdpy). The decompression code and the QT image magic was really valuable.
- - Marc-André Moreau (@awakecoding) for providing suggestions on fixes
+ - Citronneur's ([@awakecoding](https://twitter.com/citronneur)) [`rdpy`](https://github.com/citronneur/rdpy). The decompression code and the QT image magic was really valuable.
+ - Marc-André Moreau ([@awakecoding](https://twitter.com/awakecoding)) for providing suggestions on fixes
+
 
