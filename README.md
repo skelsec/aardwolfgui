@@ -2,7 +2,7 @@
 
 :triangular_flag_on_post: This is the public repository of aardwolf, for latest version and updates please consider supporting us through https://porchetta.industries/
 
-# AARDWOLFGUI - Asynchronous RDP client in Python
+# AARDWOLFGUI - Asynchronous RDP client in Python (GUI)
 Qt5 based GUI for aardwolf RDP/VNC client
 
 ## :triangular_flag_on_post: Sponsors
@@ -16,7 +16,7 @@ Come hang out on Discord!
 [![Porchetta Industries](https://discordapp.com/api/guilds/736724457258745996/widget.png?style=banner3)](https://discord.gg/ycGXUxy)
 
 # Example scripts
- - `aardpclient` Basic RDP client running on top of Qt5. Can copy-paste text, handles keyboard and mouse.  
+ - `aardpclient` Basic RDP/VNC client running on top of Qt5. Can copy-paste text, handles keyboard and mouse.  
 
 # URL format
 As usual the scripts take the target/scredentials in URL format. Below some examples
@@ -42,6 +42,6 @@ As usual the scripts take the target/scredentials in URL format. Below some exam
  - On ubuntu you can use `apt install python3-pyqt5` before installing `aardwolf` and it will (should) work
 
 # Kudos
- - Citronneur's `rdpy`. The decompression code and the QT image magic was really valuable.
+ - Citronneur's [`rdpy`](https://github.com/citronneur/rdpy). The decompression code and the QT image magic was really valuable.
  - Marc-André Moreau (@awakecoding) for providing suggestions on fixes
 
