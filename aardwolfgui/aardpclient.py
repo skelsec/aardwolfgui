@@ -7,7 +7,7 @@ import time
 
 from aardwolf import logger
 from aardwolf.keyboard import VK_MODIFIERS
-from aardwolf.commons.url import RDPConnectionURL
+from aardwolf.commons.factory import RDPConnectionFactory
 from aardwolf.commons.iosettings import RDPIOSettings
 from aardwolf.commons.queuedata import RDPDATATYPE
 from aardwolf.commons.queuedata.keyboard import RDP_KEYBOARD_SCANCODE, RDP_KEYBOARD_UNICODE
@@ -116,7 +116,7 @@ class RDPInterfaceThread(QObject):
 		input_handler_thread = None
 
 		try:
-			rdpurl = RDPConnectionURL(self.settings.url)
+			rdpurl = RDPConnectionFactory.from_url(self.settings.url)
 			self.conn = rdpurl.get_connection(self.settings.iosettings)
 			_, err = await self.conn.connect()
 			if err is not None:
