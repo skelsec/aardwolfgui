@@ -50,7 +50,7 @@ setup(
 	python_requires='>=3.7',
 
 	install_requires=[
-		'aardwolf>=0.0.8',
+		'aardwolf>=0.2.0',
 		'pyperclip',
 	] + install_requires,
 	
@@ -61,7 +61,7 @@ setup(
 	],
 	entry_points={
 		'console_scripts': [
-			'aardpclient = aardwolfgui.aardpclient:main',
+			'ardpclient = aardwolfgui.aardpclient:main',
 		],
 
 	}

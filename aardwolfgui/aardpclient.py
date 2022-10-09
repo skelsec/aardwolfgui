@@ -116,7 +116,7 @@ class RDPInterfaceThread(QObject):
 		input_handler_thread = None
 
 		try:
-			rdpurl = RDPConnectionFactory.from_url(self.settings.url)
+			rdpurl = RDPConnectionFactory.from_url(self.settings.url, self.settings.iosettings)
 			self.conn = rdpurl.get_connection(self.settings.iosettings)
 			_, err = await self.conn.connect()
 			if err is not None:
