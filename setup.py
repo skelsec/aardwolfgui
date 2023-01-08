@@ -50,7 +50,7 @@ setup(
 	python_requires='>=3.7',
 
 	install_requires=[
-		'aardwolf>=0.2.1',
+		'aardwolf>=0.2.2',
 		'pyperclip',
 	] + install_requires,
 	

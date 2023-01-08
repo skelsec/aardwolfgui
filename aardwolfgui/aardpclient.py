@@ -420,6 +420,8 @@ class RDPClientQTGUI(QMainWindow):
 	
 
 def main():
+	from aardwolf.extensions.RDPEDYC.vchannels.socksoverrdp import SocksOverRDPChannel
+
 	import logging
 	import argparse
 	parser = argparse.ArgumentParser(description='Async RDP Client. Duckyscript will be executed by pressing ESC 3 times')
@@ -431,6 +433,9 @@ def main():
 	parser.add_argument('--keyboard', default = 'enus', help='Keyboard on the client side. Used for VNC and duckyscript')
 	parser.add_argument('--ducky', help='Ducky script to be executed')
 	parser.add_argument('--duckydelay', type=int, default=-1, help='Ducky script autostart delayed')
+	parser.add_argument('--sockschannel', default = 'SocksChannel', help='-extra- The virtual channel name of the remote SOCKS proxy')
+	parser.add_argument('--socksip', default = '127.0.0.1', help='-extra- Listen IP for SOCKS server')
+	parser.add_argument('--socksport', default = 1080, help='-extra- Listen port for SOCKS server')
 	parser.add_argument('url', help="RDP connection url")
 
 	args = parser.parse_args()
@@ -455,8 +460,8 @@ def main():
 	iosettings.video_bpp_min = 15 #servers dont support 8 any more :/
 	iosettings.video_bpp_max = args.bpp
 	iosettings.video_out_format = VIDEO_FORMAT.QT5
-	iosettings.client_keyboard = args.keyboard
-	
+	iosettings.client_keyboard = args.keyboard	
+	iosettings.vchannels[args.sockschannel] = SocksOverRDPChannel(args.sockschannel, args.socksip, args.socksport)
 
 	settings = RDPClientConsoleSettings(args.url, iosettings)
 	settings.mhover = args.no_mouse_hover
