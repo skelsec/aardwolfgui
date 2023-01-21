@@ -417,14 +417,54 @@ class RDPClientQTGUI(QMainWindow):
 
 	def mousePressEvent(self, e):
 		self.send_mouse(e, True)
+
+def get_help():
+	from asysocks.unicomm.common.target import UniTarget
+	from asyauth.common.credentials import UniCredential
+
+	protocols = """RDP : RDP protocol
+	VNC: VNC protocol"""
+	authprotos = """ntlm     : CREDSSP+NTLM authentication
+	kerberos : CREDSSP+Kerberos authentication
+	sspi-ntlm: CREDSSP+NTLM authentication using current user's creds (Windows only, restricted admin mode only)
+	sspi-kerberos: CREDSSP+KERBEROS authentication using current user's creds (Windows only, restricted admin mode only)
+	plain    : Old username and password authentication (only works when NLA is disabled on the server)
+	none     : No authentication (same as plain, but no provided credentials needed)
+	"""
+	usage = UniCredential.get_help(protocols, authprotos, '')
+	usage += UniTarget.get_help()
+	usage += """
+RDP Examples:
+	Login with no credentials (only works when NLA is disabled on the server):
+		rdp://10.10.10.2
+	Login with username and password (only works when NLA is disabled on the server):
+		rdp://TEST\Administrator:Passw0rd!1@10.10.10.2
+	Login via CREDSSP+NTLM:
+		rdp+ntlm-password://TEST\Administrator:Passw0rd!1@10.10.10.2
+	Login via CREDSSP+Kerberos:
+		rdp+kerberos-password://TEST\Administrator:Passw0rd!1@win2019ad.test.corp/?dc=10.10.10.2
+	Login via CREDSSP+NTLM using current user's creds (Windows only, restricted admin mode only):
+		rdp+sspi-ntlm://win2019ad.test.corp
+	Login via CREDSSP+Kerberos using current user's creds (Windows only, restricted admin mode only):
+		rdp+sspi-kerberos://win2019ad.test.corp/
+	...
 	
+VNC examples:
+	Login with no credentials:
+		vnc://10.10.10.2
+	Login with password (the short way):
+		vnc://Passw0rd!1@10.10.10.2
+	Login with password:
+		vnc+plain-password://Passw0rd!1@10.10.10.2
+"""
+	return usage
 
 def main():
 	from aardwolf.extensions.RDPEDYC.vchannels.socksoverrdp import SocksOverRDPChannel
 
 	import logging
 	import argparse
-	parser = argparse.ArgumentParser(description='Async RDP Client. Duckyscript will be executed by pressing ESC 3 times')
+	parser = argparse.ArgumentParser(description='Async RDP Client. Duckyscript will be executed by pressing ESC 3 times', usage=get_help())
 	parser.add_argument('-v', '--verbose', action='count', default=0, help='Verbosity, can be stacked')
 	parser.add_argument('--no-mouse-hover', action='store_false', help='Disables sending mouse hovering data. (saves bandwith)')
 	parser.add_argument('--no-keyboard', action='store_false', help='Disables keyboard input. (whatever)')

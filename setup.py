@@ -13,12 +13,8 @@ else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
 install_requires = []
-if platform.system().lower() == 'windows':
-	install_requires.append('pyqt5==5.12.3')
-	install_requires.append('pyqt5-sip==12.7.0')
-else:
-	install_requires.append('pyqt5')
-	install_requires.append('pyqt5-sip')
+install_requires.append('pyqt5')
+install_requires.append('pyqt5-sip')
 
 setup(
 	# Application name:
