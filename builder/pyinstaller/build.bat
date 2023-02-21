@@ -11,7 +11,7 @@ GOTO :BUILD
 python -m venv %root%\env
 CALL %root%\env\Scripts\activate.bat
 pip install pyinstaller
-GOTO BUILD
+GOTO :BUILD
 
 :BUILD
 cd %repo%\..\ &^
