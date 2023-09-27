@@ -17,6 +17,8 @@ from aardwolf.commons.queuedata.clipboard import RDP_CLIPBOARD_DATA_TXT
 from aardwolf.commons.queuedata.constants import MOUSEBUTTON, VIDEO_FORMAT
 from aardwolf.commons.target import RDPConnectionDialect
 
+from PIL.ImageQt import ImageQt
+
 from PyQt5.QtWidgets import QApplication, QMainWindow, qApp, QLabel
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread, Qt
 from PyQt5.QtGui import QPainter, QImage, QPixmap
@@ -196,12 +198,16 @@ class RDPInterfaceThread(QObject):
 		time.sleep(0.1) # waiting for keyboard flush
 		asyncio.run_coroutine_threadsafe(self.ducky_exec(bypass_delay = True), self.loop)
 
+	@pyqtSlot()
+	def clipboard_send_files(self, files):
+		asyncio.run_coroutine_threadsafe(self.conn.set_current_clipboard_files(files), self.loop)
 
 class RDPClientQTGUI(QMainWindow):
 	#inputevent=pyqtSignal()
 
 	def __init__(self, settings:RDPClientConsoleSettings):
 		super().__init__()
+		self.setAcceptDrops(True)
 		self.settings = settings
 		self.ducky_key_ctr = 0
 
@@ -298,11 +304,12 @@ class RDPClientQTGUI(QMainWindow):
 		self.close()
 	
 	def updateImage(self, event):
+		rect = ImageQt(event.image)
 		if event.width == self.settings.iosettings.video_width and event.height == self.settings.iosettings.video_height:
-			self._buffer = event.image
+			self._buffer = rect
 		else:
 			with QPainter(self._buffer) as qp:
-				qp.drawImage(event.x, event.y, event.image, 0, 0, event.width, event.height)
+				qp.drawImage(event.x, event.y, rect, 0, 0, event.width, event.height)
 		
 		pixmap01 = QPixmap.fromImage(self._buffer)
 		pixmap_image = QPixmap(pixmap01)
@@ -417,6 +424,18 @@ class RDPClientQTGUI(QMainWindow):
 
 	def mousePressEvent(self, e):
 		self.send_mouse(e, True)
+	
+	def dragEnterEvent(self, event):
+		if event.mimeData().hasUrls():
+			event.accept()
+		else:
+			event.ignore()
+
+	def dropEvent(self, event):
+		files = [u.toLocalFile() for u in event.mimeData().urls()]
+		if len(files) == 0:
+			return
+		self._threaded.clipboard_send_files(files)
 
 def get_help():
 	from asysocks.unicomm.common.target import UniTarget
@@ -499,8 +518,8 @@ def main():
 	iosettings.video_height = height
 	iosettings.video_bpp_min = 15 #servers dont support 8 any more :/
 	iosettings.video_bpp_max = args.bpp
-	iosettings.video_out_format = VIDEO_FORMAT.QT5
-	iosettings.client_keyboard = args.keyboard	
+	iosettings.video_out_format = VIDEO_FORMAT.PIL
+	iosettings.client_keyboard = args.keyboard
 	iosettings.vchannels[args.sockschannel] = SocksOverRDPChannel(args.sockschannel, args.socksip, args.socksport)
 
 	settings = RDPClientConsoleSettings(args.url, iosettings)

@@ -1,7 +1,6 @@
 from setuptools import setup, find_packages
-from distutils.core import setup, Extension
+from distutils.core import setup
 import re
-import platform
 
 VERSIONFILE="aardwolfgui/_version.py"
 verstrline = open(VERSIONFILE, "rt").read()
@@ -11,10 +10,6 @@ if mo:
     verstr = mo.group(1)
 else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
-
-install_requires = []
-install_requires.append('pyqt5')
-install_requires.append('pyqt5-sip')
 
 setup(
 	# Application name:
@@ -46,9 +41,12 @@ setup(
 	python_requires='>=3.7',
 
 	install_requires=[
-		'aardwolf>=0.2.5',
+		'aardwolf>=0.2.7',
 		'pyperclip',
-	] + install_requires,
+        'Pillow>=9.0.1,<10.0.0', #for pyqt5
+        'pyqt5',
+        'pyqt5-sip',
+	],
 	
 	
 	classifiers=[
