@@ -43,9 +43,9 @@ setup(
 	install_requires=[
 		'aardwolf>=0.2.7',
 		'pyperclip',
-        'Pillow>=9.0.1,<10.0.0', #for pyqt5
-        'pyqt5',
-        'pyqt5-sip',
+        'Pillow', 
+        'pyqt6',
+        #'pyqt6-sip',
 	],
 	
 	

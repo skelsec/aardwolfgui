@@ -31,9 +31,9 @@ As usual the scripts take the target/scredentials in URL format. Below some exam
 
 
 # Additional info for Qt install.
- - installing in venv will require installing Qt5 outside of venv, then installing 'wheel' and 'vext.pyqt5' in the venv via pip first. then install pyqt5 in the venv
- - installing Qt5 can be a nightmare
- - On ubuntu you can use `apt install python3-pyqt5` before installing `aardwolf` and it will (should) work
+ - installing in venv will require installing Qt6 outside of venv, then installing 'wheel' and 'vext.pyqt6' in the venv via pip first. then install pyqt5 in the venv
+ - installing Qt6 can be a nightmare
+ - On ubuntu you can use `apt install python3-pyqt6` before installing `aardwolf` and it will (should) work
 
 # Kudos
  - Citronneur's ([@awakecoding](https://twitter.com/citronneur)) [`rdpy`](https://github.com/citronneur/rdpy). The decompression code and the QT image magic was really valuable.
