@@ -19,9 +19,9 @@ from aardwolf.commons.target import RDPConnectionDialect
 
 from PIL.ImageQt import ImageQt
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, qApp, QLabel
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QThread, Qt
-from PyQt5.QtGui import QPainter, QImage, QPixmap
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel #qApp, 
+from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QThread, Qt
+from PyQt6.QtGui import QPainter, QImage, QPixmap
 
 import pyperclip
 
@@ -221,7 +221,7 @@ class RDPClientQTGUI(QMainWindow):
 		self.setGeometry(0, 0, self.settings.iosettings.video_width, self.settings.iosettings.video_height)
 		# this buffer will hold the current frame and will be contantly updated
 		# as new rectangle info comes in from the server
-		self._buffer = QImage(self.settings.iosettings.video_width, self.settings.iosettings.video_height, QImage.Format_RGB32)
+		self._buffer = QImage(self.settings.iosettings.video_width, self.settings.iosettings.video_height, QImage.Format.Format_RGB32)
 		
 		
 		# setting up worker thread in a qthread
@@ -236,7 +236,7 @@ class RDPClientQTGUI(QMainWindow):
 		self._threaded.set_settings(self.settings, self.in_q)
 		self._thread.started.connect(self._threaded.start)
 		self._threaded.moveToThread(self._thread)
-		qApp.aboutToQuit.connect(self._thread.quit)
+		QApplication.instance().aboutToQuit.connect(self._thread.quit)
 		self._thread.start()
 
 		# setting up the canvas (qlabel) which will display the image data
@@ -249,48 +249,48 @@ class RDPClientQTGUI(QMainWindow):
 		self.setMouseTracking(True)
 		self._label_imageDisplay.setMouseTracking(True)
 		self.__extended_rdp_keys = {
-			Qt.Key_End : 'VK_END', 
-			Qt.Key_Down : 'VK_DOWN', 
-			Qt.Key_PageDown : 'VK_NEXT', 
-			Qt.Key_Insert : 'VK_INSERT', 
-			Qt.Key_Delete : 'VK_DELETE', 
-			Qt.Key_Print : 'VK_SNAPSHOT',
-			Qt.Key_Home : 'VK_HOME', 
-			Qt.Key_Up : 'VK_UP', 
-			Qt.Key_PageUp : 'VK_PRIOR', 
-			Qt.Key_Left : 'VK_LEFT',
-			Qt.Key_Right : 'VK_RIGHT',
-			Qt.Key_Meta : 'VK_LWIN',
-			Qt.Key_Enter : 'VK_RETURN',
-			Qt.Key_Menu : 'VK_LMENU',
-			Qt.Key_Pause : 'VK_PAUSE',
-			Qt.Key_Slash: 'VK_DIVIDE',
-			Qt.Key_Period: 'VK_DECIMAL',
+			Qt.Key.Key_End : 'VK_END', 
+			Qt.Key.Key_Down : 'VK_DOWN', 
+			Qt.Key.Key_PageDown : 'VK_NEXT', 
+			Qt.Key.Key_Insert : 'VK_INSERT', 
+			Qt.Key.Key_Delete : 'VK_DELETE', 
+			Qt.Key.Key_Print : 'VK_SNAPSHOT',
+			Qt.Key.Key_Home : 'VK_HOME', 
+			Qt.Key.Key_Up : 'VK_UP', 
+			Qt.Key.Key_PageUp : 'VK_PRIOR', 
+			Qt.Key.Key_Left : 'VK_LEFT',
+			Qt.Key.Key_Right : 'VK_RIGHT',
+			Qt.Key.Key_Meta : 'VK_LWIN',
+			Qt.Key.Key_Enter : 'VK_RETURN',
+			Qt.Key.Key_Menu : 'VK_LMENU',
+			Qt.Key.Key_Pause : 'VK_PAUSE',
+			Qt.Key.Key_Slash: 'VK_DIVIDE',
+			Qt.Key.Key_Period: 'VK_DECIMAL',
 
-			#Qt.Key_Shift: 'VK_LSHIFT',
-			#Qt.Key_Tab: 'VK_TAB',
-			#Qt.Key_0 : 'VK_NUMPAD0',
-			#Qt.Key_1 : 'VK_NUMPAD1',
-			#Qt.Key_2 : 'VK_NUMPAD2',
-			#Qt.Key_3 : 'VK_NUMPAD3',
-			#Qt.Key_4 : 'VK_NUMPAD4',
-			#Qt.Key_5 : 'VK_NUMPAD5',
-			#Qt.Key_6 : 'VK_NUMPAD6',
-			#Qt.Key_7 : 'VK_NUMPAD7',
-			#Qt.Key_8 : 'VK_NUMPAD8',
-			#Qt.Key_9 : 'VK_NUMPAD9',
+			#Qt.Key.Key_Shift: 'VK_LSHIFT',
+			#Qt.Key.Key_Tab: 'VK_TAB',
+			#Qt.Key.Key_0 : 'VK_NUMPAD0',
+			#Qt.Key.Key_1 : 'VK_NUMPAD1',
+			#Qt.Key.Key_2 : 'VK_NUMPAD2',
+			#Qt.Key.Key_3 : 'VK_NUMPAD3',
+			#Qt.Key.Key_4 : 'VK_NUMPAD4',
+			#Qt.Key.Key_5 : 'VK_NUMPAD5',
+			#Qt.Key.Key_6 : 'VK_NUMPAD6',
+			#Qt.Key.Key_7 : 'VK_NUMPAD7',
+			#Qt.Key.Key_8 : 'VK_NUMPAD8',
+			#Qt.Key.Key_9 : 'VK_NUMPAD9',
 		}
 
 		self.__qtbutton_to_rdp = {
-			Qt.LeftButton   : MOUSEBUTTON.MOUSEBUTTON_LEFT,
-			Qt.RightButton  : MOUSEBUTTON.MOUSEBUTTON_RIGHT,
-			Qt.MidButton    : MOUSEBUTTON.MOUSEBUTTON_MIDDLE,
-			Qt.ExtraButton1 : MOUSEBUTTON.MOUSEBUTTON_5,
-			Qt.ExtraButton2 : MOUSEBUTTON.MOUSEBUTTON_6,
-			Qt.ExtraButton3 : MOUSEBUTTON.MOUSEBUTTON_7,
-			Qt.ExtraButton4 : MOUSEBUTTON.MOUSEBUTTON_8,
-			Qt.ExtraButton5 : MOUSEBUTTON.MOUSEBUTTON_9,
-			Qt.ExtraButton6 : MOUSEBUTTON.MOUSEBUTTON_10,
+			Qt.MouseButton.LeftButton   : MOUSEBUTTON.MOUSEBUTTON_LEFT,
+			Qt.MouseButton.RightButton  : MOUSEBUTTON.MOUSEBUTTON_RIGHT,
+			Qt.MouseButton.MiddleButton : MOUSEBUTTON.MOUSEBUTTON_MIDDLE,
+			Qt.MouseButton.ExtraButton1 : MOUSEBUTTON.MOUSEBUTTON_5,
+			Qt.MouseButton.ExtraButton2 : MOUSEBUTTON.MOUSEBUTTON_6,
+			Qt.MouseButton.ExtraButton3 : MOUSEBUTTON.MOUSEBUTTON_7,
+			Qt.MouseButton.ExtraButton4 : MOUSEBUTTON.MOUSEBUTTON_8,
+			Qt.MouseButton.ExtraButton5 : MOUSEBUTTON.MOUSEBUTTON_9,
+			Qt.MouseButton.ExtraButton6 : MOUSEBUTTON.MOUSEBUTTON_10,
 		}
 	
 	def closeEvent(self, event):
@@ -314,7 +314,7 @@ class RDPClientQTGUI(QMainWindow):
 		pixmap01 = QPixmap.fromImage(self._buffer)
 		pixmap_image = QPixmap(pixmap01)
 		self._label_imageDisplay.setPixmap(pixmap_image)
-		self._label_imageDisplay.setAlignment(Qt.AlignCenter)
+		self._label_imageDisplay.setAlignment(Qt.AlignmentFlag.AlignCenter)
 		self._label_imageDisplay.setScaledContents(True)
 		self._label_imageDisplay.setMinimumSize(1,1)
 		self._label_imageDisplay.show()
@@ -326,12 +326,12 @@ class RDPClientQTGUI(QMainWindow):
 	#		if isinstance(value, Qt.Key):
 	#			keymap[value] = key.partition('_')[2]
 	#	modmap = {
-	#		Qt.ControlModifier: keymap[Qt.Key_Control],
-	#		Qt.AltModifier: keymap[Qt.Key_Alt],
-	#		Qt.ShiftModifier: keymap[Qt.Key_Shift],
-	#		Qt.MetaModifier: keymap[Qt.Key_Meta],
-	#		Qt.GroupSwitchModifier: keymap[Qt.Key_AltGr],
-	#		Qt.KeypadModifier: keymap[Qt.Key_NumLock],
+	#		Qt.ControlModifier: keymap[Qt.Key.Key_Control],
+	#		Qt.AltModifier: keymap[Qt.Key.Key_Alt],
+	#		Qt.ShiftModifier: keymap[Qt.Key.Key_Shift],
+	#		Qt.MetaModifier: keymap[Qt.Key.Key_Meta],
+	#		Qt.GroupSwitchModifier: keymap[Qt.Key.Key_AltGr],
+	#		Qt.KeypadModifier: keymap[Qt.Key.Key_NumLock],
 	#		}
 	#	sequence = []
 	#	for modifier, text in modmap.items():
@@ -347,7 +347,7 @@ class RDPClientQTGUI(QMainWindow):
 		
 		# ducky script starter
 		if is_pressed is True:
-			if e.key()==Qt.Key_Escape:
+			if e.key()==Qt.Key.Key_Escape:
 				self.ducky_key_ctr += 1
 				if self.ducky_key_ctr == 3:
 					self.ducky_key_ctr = 0
@@ -359,7 +359,7 @@ class RDPClientQTGUI(QMainWindow):
 			return
 		#print(self.keyevent_to_string(e))
 
-		if e.key()==(Qt.Key_Control and Qt.Key_V):
+		if e.key()==(Qt.Key.Key_Control and Qt.Key.Key_V):
 			ki = RDP_CLIPBOARD_DATA_TXT()
 			ki.datatype = CLIPBRD_FORMAT.CF_UNICODETEXT
 			ki.data = pyperclip.paste()
@@ -367,15 +367,15 @@ class RDPClientQTGUI(QMainWindow):
 		
 		modifiers = VK_MODIFIERS(0)
 		qt_modifiers = QApplication.keyboardModifiers()
-		if bool(qt_modifiers & Qt.ShiftModifier) is True and e.key() != Qt.Key_Shift:
+		if bool(qt_modifiers & Qt.ShiftModifier) is True and e.key() != Qt.Key.Key_Shift:
 			modifiers |= VK_MODIFIERS.VK_SHIFT
-		if bool(qt_modifiers & Qt.ControlModifier) is True and e.key() != Qt.Key_Control:
+		if bool(qt_modifiers & Qt.ControlModifier) is True and e.key() != Qt.Key.Key_Control:
 			modifiers |= VK_MODIFIERS.VK_CONTROL
-		if bool(qt_modifiers & Qt.AltModifier) is True and e.key() != Qt.Key_Alt:
+		if bool(qt_modifiers & Qt.AltModifier) is True and e.key() != Qt.Key.Key_Alt:
 			modifiers |= VK_MODIFIERS.VK_MENU
-		if bool(qt_modifiers & Qt.KeypadModifier) is True and e.key() != Qt.Key_NumLock:
+		if bool(qt_modifiers & Qt.KeypadModifier) is True and e.key() != Qt.Key.Key_NumLock:
 			modifiers |= VK_MODIFIERS.VK_NUMLOCK
-		if bool(qt_modifiers & Qt.MetaModifier) is True and e.key() != Qt.Key_Meta:
+		if bool(qt_modifiers & Qt.MetaModifier) is True and e.key() != Qt.Key.Key_Meta:
 			modifiers |= VK_MODIFIERS.VK_WIN
 
 		ki = RDP_KEYBOARD_SCANCODE()
@@ -532,8 +532,9 @@ def main():
 	app = QApplication(sys.argv)
 	qtclient = RDPClientQTGUI(settings)
 	qtclient.show()
-	app.exec_()
-	qApp.quit()
+	#app.exec_()
+	app.exec()
+	app.quit()
 
 if __name__ == '__main__':
 	main()
