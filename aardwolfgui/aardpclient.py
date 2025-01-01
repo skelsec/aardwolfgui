@@ -367,15 +367,15 @@ class RDPClientQTGUI(QMainWindow):
 		
 		modifiers = VK_MODIFIERS(0)
 		qt_modifiers = QApplication.keyboardModifiers()
-		if bool(qt_modifiers & Qt.ShiftModifier) is True and e.key() != Qt.Key.Key_Shift:
+		if bool(qt_modifiers & Qt.KeyboardModifier.ShiftModifier) is True and e.key() != Qt.Key.Key_Shift:
 			modifiers |= VK_MODIFIERS.VK_SHIFT
-		if bool(qt_modifiers & Qt.ControlModifier) is True and e.key() != Qt.Key.Key_Control:
+		if bool(qt_modifiers & Qt.KeyboardModifier.ControlModifier) is True and e.key() != Qt.Key.Key_Control:
 			modifiers |= VK_MODIFIERS.VK_CONTROL
-		if bool(qt_modifiers & Qt.AltModifier) is True and e.key() != Qt.Key.Key_Alt:
+		if bool(qt_modifiers & Qt.KeyboardModifier.AltModifier) is True and e.key() != Qt.Key.Key_Alt:
 			modifiers |= VK_MODIFIERS.VK_MENU
-		if bool(qt_modifiers & Qt.KeypadModifier) is True and e.key() != Qt.Key.Key_NumLock:
+		if bool(qt_modifiers & Qt.KeyboardModifier.KeypadModifier) is True and e.key() != Qt.Key.Key_NumLock:
 			modifiers |= VK_MODIFIERS.VK_NUMLOCK
-		if bool(qt_modifiers & Qt.MetaModifier) is True and e.key() != Qt.Key.Key_Meta:
+		if bool(qt_modifiers & Qt.KeyboardModifier.MetaModifier) is True and e.key() != Qt.Key.Key_Meta:
 			modifiers |= VK_MODIFIERS.VK_WIN
 
 		ki = RDP_KEYBOARD_SCANCODE()
