@@ -1,3 +1,4 @@
+import os
 import sys
 import asyncio
 import traceback
@@ -19,9 +20,9 @@ from aardwolf.commons.target import RDPConnectionDialect
 
 from PIL.ImageQt import ImageQt
 
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel #qApp, 
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QFileDialog, QMessageBox, QProgressDialog, QToolBar, QToolButton #qApp, 
 from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QThread, Qt
-from PyQt6.QtGui import QPainter, QImage, QPixmap
+from PyQt6.QtGui import QPainter, QImage, QPixmap, QAction, QKeySequence
 
 import pyperclip
 
@@ -51,6 +52,12 @@ class RDPImage:
 class RDPInterfaceThread(QObject):
 	result=pyqtSignal(RDPImage)
 	connection_terminated=pyqtSignal()
+	# server advertised files on the clipboard; carries the descriptor list
+	clipboard_files_available=pyqtSignal(object)
+	# (filename, downloaded_bytes, total_bytes, file_index, file_count)
+	download_progress=pyqtSignal(str, int, int, int, int)
+	# (success, message)
+	download_finished=pyqtSignal(bool, str)
 	
 	def __init__(self, parent=None, **kwargs):
 		super().__init__(parent, **kwargs)
@@ -62,6 +69,9 @@ class RDPInterfaceThread(QObject):
 		self.gui_stopped_evt = threading.Event()
 		self.input_handler_thread = None
 		self.asyncthread:threading.Thread = None
+		# server -> client download state
+		self._download_cancel:threading.Event = None
+		self._download_future = None
 	
 	def set_settings(self, settings, in_q):
 		self.settings = settings
@@ -139,6 +149,12 @@ class RDPInterfaceThread(QObject):
 						self.result.emit(ri)
 					else:
 						return
+				elif data.type == RDPDATATYPE.CLIPBOARD_DATA_FILELIST:
+					# the server copied files; surface the advertised list to the
+					# GUI thread so the user can choose to download them
+					if not self.gui_stopped_evt.is_set():
+						self.clipboard_files_available.emit(data.data.fileDescriptorArray)
+					continue
 				elif data.type == RDPDATATYPE.CLIPBOARD_READY:
 					continue
 				elif data.type == RDPDATATYPE.CLIPBOARD_NEW_DATA_AVAILABLE:
@@ -202,6 +218,49 @@ class RDPInterfaceThread(QObject):
 	def clipboard_send_files(self, files):
 		asyncio.run_coroutine_threadsafe(self.conn.set_current_clipboard_files(files), self.loop)
 
+	@pyqtSlot(str)
+	def download_clipboard_files(self, dest_dir):
+		# kicks off the server -> client download on the connection's event loop.
+		# called from the GUI thread, hence run_coroutine_threadsafe (same trick
+		# used by clipboard_send_files / startducky)
+		if self.conn is None or self.loop is None or not self.loop.is_running():
+			return
+		# a threading.Event is safe to set from the GUI thread and is all the
+		# library needs: download_file only polls cancel_event.is_set() at chunk
+		# boundaries, it never awaits it
+		self._download_cancel = threading.Event()
+		self._download_future = asyncio.run_coroutine_threadsafe(self._download_all(dest_dir), self.loop)
+
+	@pyqtSlot()
+	def cancel_download(self):
+		if self._download_cancel is not None:
+			self._download_cancel.set()
+
+	async def _download_all(self, dest_dir):
+		try:
+			# the sink re-roots every write under its base_dir (path-traversal
+			# guard), so directing downloads at a user-chosen folder means
+			# pointing the sink at it rather than passing an absolute dest
+			self.conn.set_download_directory(dest_dir)
+			descriptors = self.conn.get_remote_file_list()
+			count = len(descriptors)
+			for index in range(count):
+				if self._download_cancel is not None and self._download_cancel.is_set():
+					raise asyncio.CancelledError()
+				name = descriptors[index].fileName
+				# directories never reach the byte-progress callback, so emit a
+				# label update up front for every entry
+				self.download_progress.emit(name, 0, 0, index, count)
+				def _cb(done, total, _name=name, _idx=index):
+					self.download_progress.emit(_name, done, total, _idx, count)
+				await self.conn.download_file(index, progress_callback=_cb, cancel_event=self._download_cancel)
+			self.download_finished.emit(True, 'Saved %d item(s) to %s' % (count, dest_dir))
+		except asyncio.CancelledError:
+			self.download_finished.emit(False, 'Download cancelled.')
+		except Exception as e:
+			traceback.print_exc()
+			self.download_finished.emit(False, 'Download failed: %s' % e)
+
 class RDPClientQTGUI(QMainWindow):
 	#inputevent=pyqtSignal()
 
@@ -210,6 +269,13 @@ class RDPClientQTGUI(QMainWindow):
 		self.setAcceptDrops(True)
 		self.settings = settings
 		self.ducky_key_ctr = 0
+		# server -> client file download UI state
+		self._progress_dialog = None
+		self._download_active = False
+		# files the server most recently advertised, pulled on Ctrl+Shift+V
+		self._pending_remote_files = None
+		self._base_window_title = 'Aardwolf RDP/VNC'
+		self.setWindowTitle(self._base_window_title)
 
 		# enabling this will singificantly increase the bandwith
 		self.mhover = settings.mhover
@@ -232,7 +298,7 @@ class RDPClientQTGUI(QMainWindow):
 		# had to be created
 		self.in_q = queue.Queue()
 		self._thread=QThread()
-		self._threaded=RDPInterfaceThread(result=self.updateImage, connection_terminated=self.connectionClosed)
+		self._threaded=RDPInterfaceThread(result=self.updateImage, connection_terminated=self.connectionClosed, clipboard_files_available=self.onClipboardFilesAvailable, download_progress=self.onDownloadProgress, download_finished=self.onDownloadFinished)
 		self._threaded.set_settings(self.settings, self.in_q)
 		self._thread.started.connect(self._threaded.start)
 		self._threaded.moveToThread(self._thread)
@@ -244,6 +310,7 @@ class RDPClientQTGUI(QMainWindow):
 		self._label_imageDisplay.setFixedSize(self.settings.iosettings.video_width, self.settings.iosettings.video_height)
 		
 		self.setCentralWidget(self._label_imageDisplay)
+		self._build_toolbar()
 		
 		# enabling mouse tracking
 		self.setMouseTracking(True)
@@ -436,6 +503,114 @@ class RDPClientQTGUI(QMainWindow):
 		if len(files) == 0:
 			return
 		self._threaded.clipboard_send_files(files)
+
+	def _build_toolbar(self):
+		# a visible toolbar makes the actions discoverable (the shortcut alone was
+		# not) and provides window controls the WM tends to hide for a fixed-size
+		# canvas
+		tb = QToolBar('Main', self)
+		tb.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+		tb.setMovable(False)
+		tb.setFloatable(False)
+		self.addToolBar(Qt.ToolBarArea.TopToolBarArea, tb)
+
+		# the Download action owns the Ctrl+Shift+V shortcut: when enabled it
+		# fires (and consumes the keystroke so it is not forwarded to the remote);
+		# when disabled the combo falls through to the session as normal
+		self.act_download = QAction('Download remote files', self)
+		self.act_download.setToolTip('Save the files the remote machine copied to its clipboard')
+		self.act_download.setShortcut(QKeySequence('Ctrl+Shift+V'))
+		self.act_download.setEnabled(False)
+		self.act_download.triggered.connect(self.promptRemoteFileDownload)
+		tb.addAction(self.act_download)
+
+		tb.addSeparator()
+
+		self.act_fullscreen = QAction('Fullscreen', self)
+		self.act_fullscreen.setCheckable(True)
+		self.act_fullscreen.toggled.connect(self.toggleFullscreen)
+		tb.addAction(self.act_fullscreen)
+
+		act_minimize = QAction('Minimize', self)
+		act_minimize.triggered.connect(self.showMinimized)
+		tb.addAction(act_minimize)
+
+		act_close = QAction('Close', self)
+		act_close.triggered.connect(self.close)
+		tb.addAction(act_close)
+
+		# buttons must not steal keyboard focus from the RDP canvas, otherwise
+		# keystrokes would stop reaching the remote session
+		for btn in tb.findChildren(QToolButton):
+			btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
+	def toggleFullscreen(self, enabled):
+		if enabled:
+			self.showFullScreen()
+		else:
+			self.showNormal()
+
+	def onClipboardFilesAvailable(self, descriptors):
+		# the remote machine copied files. We don't grab them automatically;
+		# stash the advertised list and light up the toolbar Download button.
+		# runs on the GUI thread (queued signal)
+		if not descriptors:
+			return
+		self._pending_remote_files = descriptors
+		self.act_download.setText('Download remote files (%d)' % len(descriptors))
+		self.act_download.setEnabled(True)
+
+	def promptRemoteFileDownload(self):
+		# triggered by Ctrl+Shift+V: confirm and download the files the server
+		# most recently advertised on the clipboard
+		descriptors = self._pending_remote_files
+		if self._download_active or not descriptors:
+			return
+		names = [d.fileName for d in descriptors]
+		preview = '\n'.join('  - %s' % n for n in names[:10])
+		if len(names) > 10:
+			preview += '\n  ... and %d more' % (len(names) - 10)
+		answer = QMessageBox.question(self, 'Incoming files',
+			'The remote machine copied %d item(s):\n%s\n\nDownload them?' % (len(names), preview),
+			QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+		if answer != QMessageBox.StandardButton.Yes:
+			return
+		dest_dir = QFileDialog.getExistingDirectory(self, 'Select download folder', os.getcwd())
+		if not dest_dir:
+			return
+
+		self._pending_remote_files = None
+		self.act_download.setText('Download remote files')
+		self.act_download.setEnabled(False)
+		self._download_active = True
+		self._progress_dialog = QProgressDialog('Preparing download...', 'Cancel', 0, 0, self)
+		self._progress_dialog.setWindowTitle('Downloading files')
+		self._progress_dialog.setWindowModality(Qt.WindowModality.WindowModal)
+		self._progress_dialog.setMinimumDuration(0)
+		# we drive open/close ourselves so the dialog survives between files
+		self._progress_dialog.setAutoClose(False)
+		self._progress_dialog.setAutoReset(False)
+		self._progress_dialog.canceled.connect(self._threaded.cancel_download)
+		self._progress_dialog.show()
+		self._threaded.download_clipboard_files(dest_dir)
+
+	def onDownloadProgress(self, name, done, total, idx, count):
+		if self._progress_dialog is None:
+			return
+		# total==0 (a directory entry or the per-file kickoff) -> busy indicator
+		self._progress_dialog.setMaximum(total if total > 0 else 0)
+		self._progress_dialog.setValue(done)
+		self._progress_dialog.setLabelText('File %d of %d: %s\n%d / %d bytes' % (idx + 1, count, name, done, total))
+
+	def onDownloadFinished(self, success, message):
+		self._download_active = False
+		if self._progress_dialog is not None:
+			self._progress_dialog.close()
+			self._progress_dialog = None
+		if success:
+			QMessageBox.information(self, 'Download complete', message)
+		else:
+			QMessageBox.warning(self, 'Download', message)
 
 def get_help():
 	from asysocks.unicomm.common.target import UniTarget

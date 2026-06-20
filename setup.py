@@ -41,7 +41,7 @@ setup(
 	python_requires='>=3.7',
 
 	install_requires=[
-		'aardwolf>=0.2.7',
+		'aardwolf>=0.2.14',
 		'pyperclip',
         'Pillow', 
         'pyqt6',
